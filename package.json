@@ -9,6 +9,7 @@
     "import:dataset": "node database/import_resume_dataset.js",
     "import:atlas": "node database/import_resumeatlas.js",
     "setup:cloud": "node database/setup_cloud.js",
+    "import:cloud": "node database/import_cloud_fast.js",
     "build": "vite build",
     "start": "node server/index.js"
   },
