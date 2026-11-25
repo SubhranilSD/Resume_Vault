@@ -7,6 +7,7 @@
     "dev": "vite",
     "server": "node server/index.js",
     "import:dataset": "node database/import_resume_dataset.js",
+    "import:atlas": "node database/import_resumeatlas.js",
     "build": "vite build",
     "start": "node server/index.js"
   },

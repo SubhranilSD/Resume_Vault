@@ -657,5 +657,197 @@ app.post('/api/database/seed', async (_req, res) => {
   }
 })
 
+// AI Auto-Shortlisting Engine (evaluates all job openings against PostgreSQL resumes)
+function inferJobProfile(job) {
+  const text = `${job.title} ${job.department}`.toLowerCase()
+  const rules = [
+    { match: /full[\s-]?stack|web|frontend|react/, skills: ['React', 'TypeScript', 'JavaScript', 'Node.js', 'PostgreSQL', 'HTML', 'CSS'], keywords: ['full-stack', 'fullstack', 'frontend', 'react', 'node', 'web', 'engineer', 'developer'] },
+    { match: /machine learning|ml|ai|data scien/, skills: ['Python', 'Machine Learning', 'PyTorch', 'SQL', 'Data Analysis', 'PostgreSQL'], keywords: ['machine learning', 'ml', 'ai', 'data scientist', 'research', 'model', 'analytics'] },
+    { match: /design|ux|ui|product design/, skills: ['Figma', 'Design Systems', 'Accessibility', 'Prototyping', 'User Research', 'Adobe Creative Suite'], keywords: ['designer', 'design', 'ux', 'ui', 'research', 'figma', 'prototype'] },
+    { match: /cloud|devops|infra|sre|platform|architect/, skills: ['AWS', 'Kubernetes', 'Docker', 'Terraform', 'Linux', 'Azure'], keywords: ['cloud', 'architect', 'devops', 'infrastructure', 'sre', 'platform', 'kubernetes', 'aws'] },
+    { match: /dba|database|postgres|sql|data eng/, skills: ['PostgreSQL', 'SQL', 'Linux', 'Oracle', 'Python', 'Snowflake'], keywords: ['database', 'dba', 'postgresql', 'sql', 'data engineer', 'warehouse', 'etl'] },
+    { match: /security|cyber|secops|devsecops/, skills: ['Security', 'AWS', 'Kubernetes', 'Linux', 'Compliance', 'Risk Management', 'Networking'], keywords: ['security', 'cyber', 'secops', 'compliance', 'iam', 'risk', 'audit'] },
+    { match: /product manager|product/, skills: ['Product Strategy', 'SQL', 'Agile', 'Scrum', 'Project Management', 'Leadership'], keywords: ['product manager', 'product', 'strategy', 'roadmap', 'agile'] },
+    { match: /finance|account|audit/, skills: ['Accounting', 'Financial Analysis', 'Budgeting', 'Auditing', 'Excel', 'SAP'], keywords: ['finance', 'accounting', 'accountant', 'audit', 'financial', 'payroll'] },
+    { match: /hr|human resource|recruit|talent/, skills: ['HRIS', 'Recruiting', 'Employee Relations', 'Onboarding', 'Training', 'Leadership'], keywords: ['hr', 'human resources', 'recruiter', 'talent', 'people', 'onboarding'] },
+    { match: /market|sales|growth/, skills: ['Marketing', 'SEO', 'CRM', 'Salesforce', 'Public Relations', 'Copywriting'], keywords: ['marketing', 'sales', 'brand', 'growth', 'digital', 'crm'] }
+  ]
+
+  const matched = rules.filter(r => r.match.test(text))
+  const targetSkills = [...new Set(matched.flatMap(r => r.skills))]
+  const keywords = [...new Set([
+    ...matched.flatMap(r => r.keywords),
+    ...text.split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !['the', 'and', 'for', 'with'].includes(w))
+  ])]
+
+  if (!targetSkills.length) {
+    targetSkills.push('SQL', 'Python', 'Project Management', 'Leadership', 'Communication')
+  }
+
+  let targetExp = 4
+  if (/principal|staff|architect|director/.test(text)) targetExp = 8
+  else if (/senior|lead/.test(text)) targetExp = 5
+  else if (/junior|intern|entry/.test(text)) targetExp = 1
+
+  return { targetSkills, keywords, targetExp }
+}
+
+app.post('/api/ai-shortlist', async (req, res) => {
+  const {
+    minExperience = 2,
+    statusMode = 'active_review', // 'active_only' | 'active_review' | 'all'
+    topN = 5,
+    customSkills = '',
+    sortBy = 'skills_desc', // 'skills_desc' | 'experience_desc' | 'updated_desc'
+    jobId = null
+  } = req.body || {}
+
+  const minExpNum = Math.max(0, Number(minExperience) || 0)
+  const limitPerJob = Math.max(1, Math.min(500, Number(topN) || 5))
+  const extraSkills = String(customSkills || '').split(',').map(s => s.trim()).filter(Boolean)
+
+  const start = performance.now()
+  try {
+    const statusClause =
+      statusMode === 'active_only' ? `WHERE r.status = 'Active'`
+      : statusMode === 'active_review' ? `WHERE r.status IN ('Active', 'In review')`
+      : ''
+
+    const jobFilterClause = jobId ? `WHERE job_id = ${Number(jobId)}` : ''
+
+    const [jobsRes, appsRes, resumesRes] = await Promise.all([
+      pool.query(`
+        SELECT job_id AS id, title, department, location, status, created_at AS "createdAt"
+        FROM job_openings
+        ${jobFilterClause}
+        ORDER BY CASE status WHEN 'Open' THEN 0 WHEN 'Paused' THEN 1 ELSE 2 END, created_at DESC
+      `),
+      pool.query(`SELECT job_id, resume_id, stage FROM applications`),
+      pool.query(`
+        SELECT r.resume_id AS id, c.candidate_id AS "candidateId", c.full_name AS name,
+               c.email, c.location, r.current_title AS role, COALESCE(r.summary, '') AS summary,
+               r.experience_years AS experience, r.status, r.source, r.updated_at AS "updatedAt",
+               COALESCE(
+                 json_agg(json_build_object('name', s.skill_name, 'proficiency', rs.proficiency))
+                 FILTER (WHERE s.skill_name IS NOT NULL),
+                 '[]'::json
+               ) AS "skillDetails"
+        FROM resumes r
+        JOIN candidates c ON c.candidate_id = r.candidate_id
+        LEFT JOIN resume_skills rs ON rs.resume_id = r.resume_id
+        LEFT JOIN skills s ON s.skill_id = rs.skill_id
+        ${statusClause}
+        GROUP BY r.resume_id, c.candidate_id, c.full_name, c.email, c.location,
+                 r.current_title, r.summary, r.experience_years, r.status, r.source, r.updated_at
+      `)
+    ])
+
+    const appMap = new Map()
+    for (const a of appsRes.rows) {
+      appMap.set(`${a.job_id}:${a.resume_id}`, a.stage)
+    }
+
+    const candidates = resumesRes.rows
+    const results = jobsRes.rows.map(job => {
+      const profile = inferJobProfile(job)
+      const targetSkills = [...new Set([...profile.targetSkills, ...extraSkills])]
+      const targetLower = targetSkills.map(s => s.toLowerCase())
+      const extraLower = extraSkills.map(s => s.toLowerCase())
+
+      const matched = []
+      for (const cand of candidates) {
+        const exp = Number(cand.experience) || 0
+        if (exp < minExpNum) continue
+
+        const candSkills = Array.isArray(cand.skillDetails) ? cand.skillDetails : []
+        const candSkillNames = candSkills.map(s => s.name)
+        const candSkillLower = candSkillNames.map(s => String(s).toLowerCase())
+
+        // If user specified custom required skills, candidate must have at least one of them
+        if (extraLower.length && !extraLower.some(es => candSkillLower.includes(es))) continue
+
+        const matchedSkills = candSkillNames.filter(s => targetLower.includes(String(s).toLowerCase()))
+        const haystack = `${cand.role} ${cand.summary} ${cand.source}`.toLowerCase()
+        const roleHit = profile.keywords.some(kw => haystack.includes(kw))
+
+        if (matchedSkills.length === 0 && !roleHit) continue
+
+        matched.push({
+          id: cand.id,
+          candidateId: cand.candidateId,
+          name: cand.name,
+          email: cand.email,
+          role: cand.role,
+          location: cand.location,
+          experience: exp,
+          status: cand.status,
+          source: cand.source,
+          updatedAt: cand.updatedAt,
+          skills: candSkillNames,
+          matchedSkills,
+          pipelineStage: appMap.get(`${job.id}:${cand.id}`) || null
+        })
+      }
+
+      if (sortBy === 'experience_desc') {
+        matched.sort((a, b) => b.experience - a.experience || b.matchedSkills.length - a.matchedSkills.length)
+      } else if (sortBy === 'updated_desc') {
+        matched.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      } else {
+        matched.sort((a, b) => b.matchedSkills.length - a.matchedSkills.length || b.experience - a.experience)
+      }
+
+      return {
+        job,
+        targetSkills,
+        totalQualified: matched.length,
+        shortlisted: matched.slice(0, limitPerJob)
+      }
+    })
+
+    const executionMs = Math.round((performance.now() - start) * 100) / 100
+    res.json({
+      evaluatedResumes: candidates.length,
+      executionMs,
+      jobs: results
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({ error: 'Shortlisting failed', details: error.message })
+  }
+})
+
+function effectiveMinExpSafe(v) { return Number(v) || 0 }
+
+app.post('/api/ai-shortlist/apply-batch', async (req, res) => {
+  const { assignments } = req.body || {}
+  if (!Array.isArray(assignments) || !assignments.length) {
+    return res.status(400).json({ error: 'No assignments provided' })
+  }
+  let client
+  try {
+    client = await pool.connect()
+    await client.query('BEGIN')
+    let count = 0
+    for (const item of assignments) {
+      if (!item.jobId || !item.resumeId) continue
+      await client.query(
+        `INSERT INTO applications (resume_id, job_id, stage)
+         VALUES ($1, $2, 'Screening')
+         ON CONFLICT (resume_id, job_id) DO NOTHING`,
+        [Number(item.resumeId), Number(item.jobId)]
+      )
+      count++
+    }
+    await client.query('COMMIT')
+    res.status(201).json({ assigned: count, message: `Added ${count} auto-shortlisted candidate(s) to Screening pipeline` })
+  } catch (error) {
+    if (client) { try { await client.query('ROLLBACK') } catch {} }
+    res.status(500).json({ error: 'Batch assignment failed', details: error.message })
+  } finally {
+    if (client) client.release()
+  }
+})
+
 const port = Number(process.env.PORT || 4000)
 app.listen(port, () => console.log(`ResumeVault API running on http://localhost:${port}`))

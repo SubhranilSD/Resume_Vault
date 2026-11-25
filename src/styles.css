@@ -1645,3 +1645,65 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); letter-spacing: -0
   .brand-name { display: none; }
   .mobile-tab { font-size: 9.5px; }
 }
+
+/* ---------- Job Shortlister Tab (Simple & Manual Selection) ---------- */
+.ai-simple-filters { display: flex; flex-direction: column; gap: 12px; }
+.ai-simple-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 14px; }
+.ai-simple-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding-top: 10px; border-top: 1px solid var(--border); flex-wrap: wrap; }
+.ai-input-field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--text-2); }
+.ai-input-field span { font-weight: 600; }
+.ai-input-field small { font-weight: 400; color: var(--text-3); }
+.ai-input-field input[type="number"], .ai-input-field input[type="text"] {
+  height: 34px; padding: 0 10px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); font-size: 13px; outline: none;
+}
+.ai-input-field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
+
+.ai-jobs-stack { display: flex; flex-direction: column; gap: 12px; }
+.ai-job-header { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 14px 18px; flex-wrap: wrap; background: var(--surface); transition: background 0.15s; }
+.ai-job-toggle { cursor: pointer; }
+.ai-job-toggle:hover { background: var(--surface-hover); }
+.ai-job-toggle.open { border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.ai-job-title-block { display: flex; flex-direction: column; gap: 5px; min-width: 0; flex: 1; }
+.ai-job-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ai-job-title-row h2 { font-size: 15px; font-weight: 700; }
+.ai-chevron { color: var(--text-3); display: inline-grid; place-items: center; }
+.ai-accent-icon { color: var(--accent); flex-shrink: 0; }
+.ai-count-pill { font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.ai-inline-skills { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.ai-job-header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.ai-table input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+.ai-row-selected { background: var(--accent-soft) !important; }
+.ai-full-scroll { max-height: 460px; overflow-y: auto; }
+.ai-job-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 18px; border-top: 1px solid var(--border); background: var(--surface-2); font-size: 12.5px; color: var(--text-2); }
+
+.ai-tag-hit { background: var(--accent-soft) !important; border-color: var(--accent-ring) !important; color: var(--accent) !important; gap: 3px; }
+.ai-in-pipeline { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; background: var(--green-soft); color: var(--green); white-space: nowrap; }
+
+@media (max-width: 1024px) {
+  .ai-simple-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .ai-simple-grid { grid-template-columns: 1fr; }
+}
+
+/* Clickable KPI strip cards */
+.kpi-clickable {
+  background: transparent;
+  border-top: 0;
+  border-bottom: 0;
+  border-left: 0;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+.kpi-clickable:hover {
+  background: var(--surface-hover);
+}
+.kpi-clickable:hover .kpi-label {
+  color: var(--accent);
+}
+.kpi-clickable:active {
+  background: var(--accent-soft);
+}

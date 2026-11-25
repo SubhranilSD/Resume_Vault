@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Code2, Database, FilePlus2, LayoutDashboard, Search, Users, BriefcaseBusiness, BarChart3, X } from 'lucide-react'
+import { ArrowRight, Code2, Database, FilePlus2, LayoutDashboard, Search, Sparkles, Users, BriefcaseBusiness, BarChart3, X } from 'lucide-react'
 import { queryPresets } from '../data/presets'
 
 export default function CommandPalette({ open, onClose, resumes, onNavigate, onSelectResume, onSelectQuery, onOpenAdd }) {
@@ -19,6 +19,7 @@ export default function CommandPalette({ open, onClose, resumes, onNavigate, onS
       { id: 'nav-overview', type: 'Page', title: 'Overview Dashboard', sub: 'KPIs, activity chart, recent resumes', icon: LayoutDashboard, action: () => onNavigate('Overview') },
       { id: 'nav-talent', type: 'Page', title: 'Talent Pool Directory', sub: 'Search, filter and manage all candidates', icon: Users, action: () => onNavigate('Talent pool') },
       { id: 'nav-jobs', type: 'Page', title: 'Job Openings & Pipeline', sub: 'Manage roles and applicant stages', icon: BriefcaseBusiness, action: () => onNavigate('Job openings') },
+      { id: 'nav-ai', type: 'Page', title: 'AI Auto-Shortlist', sub: 'Auto-rank resumes for every open job', icon: Sparkles, action: () => onNavigate('AI Shortlist') },
       { id: 'nav-db', type: 'Page', title: 'Database & Schema Explorer', sub: '3NF tables, ER map, audit logs', icon: Database, action: () => onNavigate('Database') },
       { id: 'nav-sql', type: 'Page', title: 'SQL Query Lab', sub: 'Run live PostgreSQL queries & EXPLAIN', icon: Code2, action: () => onNavigate('Query lab') },
       { id: 'nav-reports', type: 'Page', title: 'Reports & Analytics', sub: 'Skill demand and source breakdown', icon: BarChart3, action: () => onNavigate('Reports') },

@@ -3,13 +3,14 @@ import {
   Activity, ArrowRight, BarChart3, Bell, BookOpen, BriefcaseBusiness, Building2, Check,
   ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Code2, Database, Download,
   Edit3, ExternalLink, FileText, GraduationCap, HardDrive, LayoutDashboard,
-  LayoutGrid, Mail, MapPin, Moon, PanelRight, Plus, RefreshCw, Search, Sun,
+  LayoutGrid, Mail, MapPin, Moon, PanelRight, Plus, RefreshCw, Search, Sparkles, Sun,
   Trash2, Users, X
 } from 'lucide-react'
 import { avatarColors, chartColors } from './data/presets'
 import CommandPalette from './components/CommandPalette'
 import { AddEditModal, Avatar, ConfirmModal, HelpModal, ProfileModal, StatusBadge, StorageModal } from './components/Modals'
 import JobsPage from './components/JobsPage'
+import AiShortlistPage from './components/AiShortlistPage'
 import DatabasePage from './components/DatabasePage'
 import QueryLabPage from './components/QueryLabPage'
 import ReportsPage from './components/ReportsPage'
@@ -22,6 +23,7 @@ const NAV = [
   ['Overview', LayoutDashboard, 'Home'],
   ['Talent pool', Users, 'Talent'],
   ['Job openings', BriefcaseBusiness, 'Jobs'],
+  ['AI Shortlist', Sparkles, 'AI Match'],
   ['Database', Database, 'Schema'],
   ['Query lab', Code2, 'SQL'],
   ['Reports', BarChart3, 'Reports']
@@ -435,11 +437,39 @@ export default function App() {
             />
 
             <section className="kpi-strip">
-              <Kpi label="Resumes" value={(summary?.total_resumes ?? 0).toLocaleString()} note="total in resume_vault" />
-              <Kpi label="Active" value={(summary?.active_count ?? 0).toLocaleString()} note={`${Math.round(((summary?.active_count || 0) / Math.max(1, summary?.total_resumes || 1)) * 100)}% of pool`} tone="ok" />
-              <Kpi label="In review" value={(summary?.review_count ?? 0).toLocaleString()} note="awaiting decision" tone="warn" />
-              <Kpi label="Avg. experience" value={`${summary?.avg_experience ?? '0.0'}`} unit="yrs" note="across all resumes" />
-              <Kpi label="Open roles" value={summary?.open_jobs ?? 0} note={`${summary?.total_applications ?? 0} applications`} />
+              <Kpi
+                label="Resumes"
+                value={(summary?.total_resumes ?? 0).toLocaleString()}
+                note="total in resume_vault"
+                onClick={() => { setSearch(''); setStatusFilter(''); setSkillFilter(''); setSortBy('updated_desc'); setPage('Talent pool') }}
+              />
+              <Kpi
+                label="Active"
+                value={(summary?.active_count ?? 0).toLocaleString()}
+                note={`${Math.round(((summary?.active_count || 0) / Math.max(1, summary?.total_resumes || 1)) * 100)}% of pool`}
+                tone="ok"
+                onClick={() => { setSearch(''); setSkillFilter(''); setStatusFilter('Active'); setPage('Talent pool') }}
+              />
+              <Kpi
+                label="In review"
+                value={(summary?.review_count ?? 0).toLocaleString()}
+                note="awaiting decision"
+                tone="warn"
+                onClick={() => { setSearch(''); setSkillFilter(''); setStatusFilter('In review'); setPage('Talent pool') }}
+              />
+              <Kpi
+                label="Avg. experience"
+                value={`${summary?.avg_experience ?? '0.0'}`}
+                unit="yrs"
+                note="across all resumes"
+                onClick={() => { setSearch(''); setStatusFilter(''); setSkillFilter(''); setSortBy('experience_desc'); setPage('Talent pool') }}
+              />
+              <Kpi
+                label="Open roles"
+                value={summary?.open_jobs ?? 0}
+                note={`${summary?.total_applications ?? 0} applications`}
+                onClick={() => setPage('Job openings')}
+              />
             </section>
 
             <div className="grid-2-1">
@@ -655,6 +685,7 @@ export default function App() {
         )}
 
         {page === 'Job openings' && <div className="page page-anim" key="jobs"><JobsPage resumes={recent.length ? [...recent, ...resumes.filter(r => !recent.some(x => x.id === r.id))] : resumes} connected={connected} onNotify={notify} /></div>}
+        {page === 'AI Shortlist' && <div className="page page-anim" key="ai"><AiShortlistPage connected={connected} onSelectResume={openProfile} onNotify={notify} onRefresh={refreshAll} /></div>}
         {page === 'Database' && <div className="page page-anim" key="db"><DatabasePage connected={connected} theme={theme} /></div>}
         {page === 'Query lab' && <div className="page page-anim" key="sql"><QueryLabPage query={queryIdx} setQuery={setQueryIdx} connected={connected} onNotify={notify} /></div>}
         {page === 'Reports' && <div className="page page-anim" key="reports"><ReportsPage stats={stats} resumes={resumes} onSelectSkill={openSkillFilter} /></div>}
@@ -765,7 +796,7 @@ function CardHead({ title, sub, right, small }) {
   )
 }
 
-function Kpi({ label, value, unit, note, tone }) {
+function Kpi({ label, value, unit, note, tone, onClick }) {
   const numeric = typeof value === 'number' ? value : Number(String(value).replace(/,/g, ''))
   const isFloat = typeof value === 'string' && value.includes('.')
   const [shown, setShown] = useState(Number.isFinite(numeric) ? numeric : value)
@@ -797,11 +828,11 @@ function Kpi({ label, value, unit, note, tone }) {
   }, [value])
 
   return (
-    <div className={`kpi ${tone ? `kpi-${tone}` : ''}`}>
+    <button type="button" className={`kpi ${tone ? `kpi-${tone}` : ''} ${onClick ? 'kpi-clickable' : ''}`} onClick={onClick}>
       <span className="kpi-label">{label}</span>
       <span className="kpi-value">{shown}{unit && <small>{unit}</small>}</span>
       <span className="kpi-note">{note}</span>
-    </div>
+    </button>
   )
 }
 
