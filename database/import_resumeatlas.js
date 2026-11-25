@@ -84,8 +84,11 @@ async function run() {
   const lines = fs.readFileSync(jsonlPath, 'utf8').trim().split('\n')
   console.log(`Parsed ${lines.length} records from resumes_dataset.jsonl.`)
 
-  const pool = new pg.Pool(process.env.DATABASE_URL ? {
-    connectionString: process.env.DATABASE_URL
+  const connStr = process.env.DATABASE_URL || process.env.POSTGRES_URL
+  const isRemote = Boolean(connStr && !connStr.includes('localhost') && !connStr.includes('127.0.0.1'))
+  const pool = new pg.Pool(connStr ? {
+    connectionString: connStr,
+    ssl: isRemote ? { rejectUnauthorized: false } : false
   } : {
     host: process.env.PG_HOST || 'localhost',
     port: Number(process.env.PG_PORT || 5432),
