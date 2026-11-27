@@ -151,10 +151,10 @@ export default function ResumeModeViewer({
       const aspect = vw / vh
       camera.aspect = aspect
       if (aspect < 0.85) {
-        // Portrait phone view: frame the active right-hand resume sheet large & readable!
-        const zDist = Math.max(7.6, 5.4 / Math.max(0.42, aspect))
-        camera.position.set(1.42, 0.14, zDist)
-        camera.lookAt(1.42, 0, 0)
+        // Portrait phone view: frame the active right-hand resume sheet large, centered, and clear of top/bottom UI
+        const zDist = Math.max(8.8, Math.min(13.2, 5.95 / Math.max(0.42, aspect)))
+        camera.position.set(1.475, -0.18, zDist)
+        camera.lookAt(1.475, -0.18, 0)
       } else {
         // Landscape / desktop: full open 2-page 3D spread
         const aspectFactor = Math.max(1, 1.52 / Math.max(0.75, aspect))
@@ -649,7 +649,7 @@ export default function ResumeModeViewer({
       }
     }
 
-    const dragSpan = Math.max(260, rect.width * 0.42)
+    const dragSpan = Math.min(300, Math.max(150, rect.width * 0.5))
     if (eng.mode === 'drag-next') {
       const p = Math.max(0, Math.min(1, -dx / dragSpan))
       eng.progress = p
@@ -715,7 +715,7 @@ export default function ResumeModeViewer({
       <footer className="rm-dock">
         <button
           type="button"
-          className="rm-nav-btn"
+          className="rm-nav-btn rm-nav-prev"
           disabled={!canPrev}
           onClick={() => engineRef.current.startProgrammaticTurn?.('prev')}
           title="Previous resume (or drag right)"
@@ -732,10 +732,10 @@ export default function ResumeModeViewer({
             <StatusBadge status={current.status} />
             <button
               type="button"
-              className="btn btn-primary btn-sm"
+              className="btn btn-primary btn-sm rm-open-btn"
               onClick={() => { onClose(); onOpenProfile?.(current) }}
             >
-              <ExternalLink size={13} /> Open profile
+              <ExternalLink size={13} /> <span>Open profile</span>
             </button>
           </div>
         ) : (
@@ -744,7 +744,7 @@ export default function ResumeModeViewer({
 
         <button
           type="button"
-          className="rm-nav-btn"
+          className="rm-nav-btn rm-nav-next"
           disabled={!canNext}
           onClick={() => engineRef.current.startProgrammaticTurn?.('next')}
           title="Next resume (or drag left)"

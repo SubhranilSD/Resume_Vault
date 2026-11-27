@@ -1334,8 +1334,11 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); letter-spacing: -0
 .profile-status-switch { display: inline-flex; padding: 3px; gap: 2px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 9px; }
 .status-chip { border: 0; background: transparent; padding: 4.5px 10px; border-radius: 6.5px; font-size: 12px; font-weight: 500; color: var(--text-2); transition: background 0.16s, color 0.16s; }
 .status-chip.selected { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 0 0 1px var(--border), 0 1px 2px rgba(0,0,0,0.08); }
-.modal-tabs { display: flex; gap: 3px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto; }
-.modal-tab { border: 0; background: transparent; padding: 8.5px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; transition: color 0.15s, border-color 0.2s; }
+.modal-tabs { display: flex; gap: 3px; border-bottom: 1px solid var(--border); margin-bottom: 16px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; flex-shrink: 0; }
+.modal-tabs::-webkit-scrollbar { display: none; }
+.modal-tab { border: 0; background: transparent; padding: 8.5px 12px; font-size: 13px; font-weight: 500; color: var(--text-2); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; flex-shrink: 0; transition: color 0.15s, border-color 0.2s; }
+.modal-tab.mobile-only-tab { display: none; }
+.profile-mobile-paper-tab { width: 100%; min-height: 360px; margin-bottom: 8px; }
 .modal-tab:hover { color: var(--text); }
 .modal-tab.active { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
 .profile-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 14px; }
@@ -1467,10 +1470,10 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); letter-spacing: -0
   .kpi:nth-child(n+4) { border-top: 1px solid var(--border); }
 }
 @media (max-width: 960px) {
-  .grid-2-1, .grid-1-1, .db-layout, .dashboard-grid, .split { grid-template-columns: 1fr; }
-  .profile-split-shell { grid-template-columns: 1fr; max-height: 92vh; overflow-y: auto; gap: 14px; }
-  .profile-split-shell .profile-modal { max-height: none; overflow: visible; }
-  .profile-paper-pane { min-height: 360px; max-height: none; }
+  .grid-2-1, .grid-1-1, .db-layout, .dashboard-grid, .split { grid-template-columns: minmax(0, 1fr); }
+  .profile-split-shell { grid-template-columns: minmax(0, 1fr); width: min(640px, 100%); max-height: 92vh; overflow-y: auto; gap: 14px; }
+  .profile-split-shell .profile-modal { max-height: none; overflow: visible; min-width: 0; }
+  .profile-paper-pane { min-height: 360px; max-height: none; min-width: 0; }
   .folio-3d-wrap.folio-3d-tall { min-height: 360px; }
   .rm-drag-guide { display: none; }
   .preview { position: static; max-height: none; }
@@ -1707,42 +1710,88 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); letter-spacing: -0
   /* Hide inline bottom preview pane on narrow split view since tap opens full ProfileModal */
   .split:not(.split-grid) .preview { display: none; }
 
-  /* Modals & Side-by-Side Profile on Phones */
-  .modal-backdrop { padding: 10px; align-items: flex-end; }
-  .modal { padding: 18px 16px; border-radius: 18px; max-height: 88vh; }
-  .profile-split-shell { width: 100%; max-height: 90vh; }
-  .profile-hero { padding-right: 36px; gap: 10px; }
+  /* Modals & Profile Modal on Phones */
+  .modal-backdrop { padding: 12px; align-items: center; justify-items: center; }
+  .modal { padding: 16px 14px; border-radius: 18px; max-height: 90vh; width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; }
+  .modal-close { top: 12px; right: 12px; z-index: 5; }
+  .profile-split-shell {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    overflow: hidden;
+  }
+  .profile-split-shell .profile-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 14px;
+  }
+  /* Move 3D sheet into its own dedicated "3D Resume" tab on phones instead of stacking a clipped second card below */
+  .profile-paper-pane { display: none; }
+  .modal-tab.mobile-only-tab { display: inline-flex; align-items: center; }
+  .profile-mobile-paper-tab { min-height: 350px; }
+  .profile-mobile-paper-tab .folio-3d-wrap.folio-3d-tall { min-height: 350px; }
+  .profile-hero { padding-right: 40px; gap: 10px; margin-bottom: 12px; }
+  .profile-hero-info { min-width: 0; }
+  .profile-hero-info h2 { font-size: 18px; word-break: break-word; }
   .profile-status-switch { width: 100%; }
-  .profile-status-switch .status-chip { flex: 1; text-align: center; }
-  .profile-paper-pane { min-height: 310px; }
-  .folio-3d-wrap.folio-3d-tall { min-height: 310px; }
-  .profile-foot { flex-direction: column; align-items: stretch; gap: 10px; }
-  .profile-foot-actions { display: grid; grid-template-columns: repeat(3, 1fr); }
+  .profile-status-switch .status-chip { flex: 1; text-align: center; padding: 6px 6px; font-size: 12px; }
+  .modal-tabs { gap: 2px; margin-bottom: 12px; }
+  .modal-tab { padding: 8px 10px; font-size: 12.5px; }
+  .profile-foot { flex-direction: column; align-items: stretch; gap: 10px; margin-top: 14px; padding-top: 12px; }
+  .profile-foot-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .profile-foot-actions button { min-width: 0; padding: 0 8px; justify-content: center; font-size: 12px; }
   .modal-actions { flex-wrap: wrap; }
   .modal-actions button { flex: 1; }
   .cmd-palette { margin-top: 4vh; max-height: 80vh; }
 
-  /* Full-Screen 3D Resume Mode on Phones */
-  .rm-topbar { padding: 12px 14px; }
-  .rm-badge { height: 32px; padding: 0 11px; font-size: 12px; }
+  /* Full-Screen 3D Resume Mode Restructured for Phones */
+  .rm-topbar {
+    padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+    gap: 8px;
+  }
+  .rm-brand { gap: 6px; min-width: 0; }
+  .rm-badge { height: 32px; padding: 0 10px; font-size: 12px; gap: 5px; }
   .rm-count { height: 28px; padding: 0 9px; font-size: 11px; }
-  .rm-close { height: 32px; padding: 0 10px; }
+  .rm-close { width: 34px; height: 34px; padding: 0; justify-content: center; flex-shrink: 0; }
   .rm-close kbd, .rm-close span { display: none; }
   .rm-dock {
     width: calc(100vw - 20px);
+    max-width: 420px;
     margin: 0 auto max(12px, env(safe-area-inset-bottom));
-    padding: 7px 8px;
-    gap: 6px;
-    border-radius: 20px;
-    justify-content: space-between;
+    padding: 12px;
+    border-radius: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "info info"
+      "prev next";
+    gap: 10px;
   }
-  .rm-nav-btn { height: 36px; padding: 0 10px; flex-shrink: 0; }
-  .rm-nav-btn span { display: none; }
-  .rm-cand-info { gap: 8px; padding: 0 2px; flex: 1; justify-content: space-between; }
+  .rm-cand-info {
+    grid-area: info;
+    padding: 0 2px;
+    gap: 10px;
+    justify-content: space-between;
+    width: 100%;
+  }
   .rm-cand-info .status { display: none; }
-  .rm-cand-meta { max-width: 150px; }
-  .rm-cand-meta b { font-size: 13px; }
-  .rm-cand-meta span { font-size: 11px; }
+  .rm-cand-meta { max-width: none; flex: 1; min-width: 0; }
+  .rm-cand-meta b { font-size: 14px; }
+  .rm-cand-meta span { font-size: 11.5px; }
+  .rm-open-btn { flex-shrink: 0; height: 32px; padding: 0 11px; font-size: 12px; }
+  .rm-nav-prev { grid-area: prev; }
+  .rm-nav-next { grid-area: next; }
+  .rm-nav-btn {
+    width: 100%;
+    height: 38px;
+    padding: 0 12px;
+    justify-content: center;
+    border-radius: 11px;
+  }
+  .rm-nav-btn span { display: inline; }
 
   /* Sub-pages on Phones */
   .schema-3d-wrap { height: 255px; }

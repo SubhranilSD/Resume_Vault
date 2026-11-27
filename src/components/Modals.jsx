@@ -132,15 +132,16 @@ export function ProfileModal({
 
           <div className="modal-tabs">
             {[
-              ['overview', 'Overview', 1],
-              ['history', 'Experience & Edu', 2],
-              ['apps', `Applications (${detail.applications?.length || 0})`, 2],
-              ['raw', 'Raw DB Row', 2]
-            ].map(([key, label, targetSide]) => (
+              ['overview', 'Overview', 1, false],
+              ['paper', '3D Resume', 1, true],
+              ['history', 'Experience & Edu', 2, false],
+              ['apps', `Applications (${detail.applications?.length || 0})`, 2, false],
+              ['raw', 'Raw DB Row', 2, false]
+            ].map(([key, label, targetSide, mobileOnly]) => (
               <button
                 key={key}
                 type="button"
-                className={`modal-tab ${tab === key ? 'active' : ''}`}
+                className={`modal-tab ${tab === key ? 'active' : ''} ${mobileOnly ? 'mobile-only-tab' : ''}`}
                 onClick={() => {
                   setTab(key)
                   setPaperSide(targetSide)
@@ -150,6 +151,22 @@ export function ProfileModal({
               </button>
             ))}
           </div>
+
+        {tab === 'paper' && (
+          <div className="profile-mobile-paper-tab">
+            <ResumePaper3D
+              person={detail}
+              theme={theme}
+              tall
+              controlledSide={paperSide}
+              onTurn={(_, nextSide) => {
+                if (nextSide) setPaperSide(nextSide)
+                onPaperTurn?.(detail)
+              }}
+              onFullscreen={onOpenResumeMode ? () => { onClose(); onOpenResumeMode(detail) } : undefined}
+            />
+          </div>
+        )}
 
         {tab === 'overview' && (
           <>
