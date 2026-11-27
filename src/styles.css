@@ -1451,7 +1451,9 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); letter-spacing: -0
 }
 
 /* ---------- Mobile Bottom Navigation Bar ---------- */
-.mobile-bottom-nav {
+.mobile-bottom-nav,
+.mobile-more-backdrop,
+.mobile-more-sheet {
   display: none;
 }
 
@@ -1490,20 +1492,19 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); letter-spacing: -0
 
   .mobile-bottom-nav {
     position: fixed;
-    left: 10px;
-    right: 10px;
-    bottom: max(10px, env(safe-area-inset-bottom));
-    z-index: 50;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 55;
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 2px;
-    padding: 5px 6px;
-    border-radius: 18px;
-    background: var(--bar);
-    backdrop-filter: blur(20px) saturate(165%);
-    -webkit-backdrop-filter: blur(20px) saturate(165%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 14px 36px -8px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-top: 1px solid var(--border-strong);
+    box-shadow: 0 -4px 20px -6px rgba(15, 18, 22, 0.08);
   }
   .mobile-tab {
     display: flex;
@@ -1511,48 +1512,160 @@ h1, h2, h3, h4 { margin: 0; font-family: var(--font-display); letter-spacing: -0
     align-items: center;
     justify-content: center;
     gap: 3px;
-    padding: 6px 2px;
+    padding: 4px 2px;
     border: 0;
-    border-radius: 13px;
+    border-radius: 10px;
     background: transparent;
-    color: var(--bar-muted);
+    color: var(--text-3);
     font-family: var(--font);
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 500;
-    line-height: 1;
-    letter-spacing: 0.01em;
-    transition: color 0.18s ease, background 0.2s ease, transform 0.18s var(--ease-spring);
+    line-height: 1.1;
+    letter-spacing: 0.005em;
+    cursor: pointer;
+    transition: color 0.16s ease, transform 0.16s var(--ease-spring);
     -webkit-tap-highlight-color: transparent;
   }
-  .mobile-tab:active { transform: scale(0.92); }
+  .mobile-tab:active { transform: scale(0.94); }
   .mobile-tab-icon {
-    width: 28px;
-    height: 24px;
+    width: 40px;
+    height: 26px;
     border-radius: 999px;
     display: grid;
     place-items: center;
-    transition: background 0.22s var(--ease-spring), color 0.18s ease;
+    transition: background 0.18s ease, color 0.16s ease;
   }
   .mobile-tab.active {
-    color: #ffffff;
+    color: var(--accent);
     font-weight: 600;
   }
   .mobile-tab.active .mobile-tab-icon {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  /* Clean slide-up "More" sheet for secondary DBMS & Analytics pages */
+  .mobile-more-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 52;
+    background: rgba(15, 18, 22, 0.28);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+  .mobile-more-sheet {
+    display: block;
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    z-index: 54;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    padding: 10px;
+    animation: mobileSheetIn 0.18s var(--ease-spring) both;
+  }
+  @keyframes mobileSheetIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .mobile-more-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .mobile-more-close {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-2);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+  .mobile-more-close:active { background: var(--surface-2); }
+  .mobile-more-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .mobile-more-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 10px;
+    border: 1px solid transparent;
+    border-radius: 11px;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mobile-more-item:active { background: var(--surface-2); }
+  .mobile-more-item.active {
+    background: var(--accent-soft);
+    border-color: var(--accent-ring);
+  }
+  .mobile-more-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--surface-2);
+    color: var(--text-2);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+  }
+  .mobile-more-item.active .mobile-more-icon {
     background: var(--accent);
     color: var(--accent-ink);
-    box-shadow: 0 3px 10px -2px var(--accent-ring);
+  }
+  .mobile-more-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+  .mobile-more-copy b {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .mobile-more-copy small {
+    font-size: 11.5px;
+    color: var(--text-2);
+  }
+  .mobile-more-arrow {
+    color: var(--text-3);
+    flex-shrink: 0;
   }
 
   /* Prevent content & toast from colliding with fixed bottom tab bar */
   .page { padding: 18px 14px 28px; gap: 14px; }
   .statusbar {
-    padding: 10px 14px calc(86px + env(safe-area-inset-bottom));
+    padding: 10px 14px calc(74px + env(safe-area-inset-bottom));
     height: auto;
     flex-wrap: wrap;
     gap: 8px;
   }
   .statusbar-mid { display: none; }
-  .toast { bottom: calc(82px + env(safe-area-inset-bottom)); max-width: calc(100vw - 28px); }
+  .toast { bottom: calc(72px + env(safe-area-inset-bottom)); max-width: calc(100vw - 28px); }
 
   /* Keep popovers neatly inside phone viewport */
   .popover, .popover-wide, .popover-menu {

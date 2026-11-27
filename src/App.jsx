@@ -3,7 +3,7 @@ import {
   Activity, ArrowRight, BarChart3, Bell, BookOpen, BriefcaseBusiness, Building2, Check,
   ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Code2, Database, Download,
   Edit3, ExternalLink, FileText, GraduationCap, HardDrive, LayoutDashboard,
-  LayoutGrid, Mail, MapPin, Moon, PanelRight, Plus, RefreshCw, Search, Sparkles, Sun,
+  LayoutGrid, Mail, MapPin, Moon, MoreHorizontal, PanelRight, Plus, RefreshCw, Search, Sparkles, Sun,
   Trash2, Users, X
 } from 'lucide-react'
 import { avatarColors, chartColors } from './data/presets'
@@ -23,10 +23,17 @@ const NAV = [
   ['Overview', LayoutDashboard, 'Home'],
   ['Talent pool', Users, 'Talent'],
   ['Job openings', BriefcaseBusiness, 'Jobs'],
-  ['AI Shortlist', Sparkles, 'AI Match'],
+  ['AI Shortlist', Sparkles, 'Shortlist'],
   ['Database', Database, 'Schema'],
   ['Query lab', Code2, 'SQL'],
   ['Reports', BarChart3, 'Reports']
+]
+
+const MOBILE_PRIMARY_NAV = NAV.slice(0, 4)
+const MOBILE_MORE_NAV = [
+  ['Database', Database, 'Database Schema', 'Tables, indexes & 3D constellation'],
+  ['Query lab', Code2, 'SQL Query Lab', 'Run read-only SQL & EXPLAIN plans'],
+  ['Reports', BarChart3, 'Reports & Analytics', 'Skill demand & sourcing metrics']
 ]
 
 const WORKSPACES = [
@@ -93,6 +100,7 @@ export default function App() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [queryIdx, setQueryIdx] = useState(0)
   const [toast, setToast] = useState('')
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false)
   const [paperTurn, setPaperTurn] = useState({ seq: 0, person: null })
   const [resumeMode, setResumeMode] = useState({ open: false, index: 0 })
   const navRef = useRef(null)
@@ -221,7 +229,7 @@ export default function App() {
       if (sRes.ok) setStats(await sRes.json())
       if (aRes.ok) setAuditLogs(await aRes.json())
       if (rRes.ok) setRecent(withLook((await rRes.json()).data || []))
-    } catch {}
+    } catch { }
   }, [activityDays])
 
   const refreshAll = useCallback(async () => {
@@ -701,18 +709,76 @@ export default function App() {
         </span>
       </footer>
 
+      {mobileMoreOpen && (
+        <>
+          <div className="mobile-more-backdrop" onClick={() => setMobileMoreOpen(false)} />
+          <div className="mobile-more-sheet" role="menu" aria-label="More navigation">
+            <div className="mobile-more-head">
+              <span>DBMS &amp; Analytics</span>
+              <button type="button" className="mobile-more-close" onClick={() => setMobileMoreOpen(false)} aria-label="Close menu">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="mobile-more-list">
+              {MOBILE_MORE_NAV.map(([label, Icon, title, desc]) => (
+                <button
+                  type="button"
+                  key={label}
+                  role="menuitem"
+                  className={`mobile-more-item ${page === label ? 'active' : ''}`}
+                  onClick={() => {
+                    setPage(label)
+                    setMobileMoreOpen(false)
+                    window.scrollTo({ top: 0, behavior: 'smooth' })
+                  }}
+                >
+                  <span className="mobile-more-icon"><Icon size={18} strokeWidth={2} /></span>
+                  <span className="mobile-more-copy">
+                    <b>{title}</b>
+                    <small>{desc}</small>
+                  </span>
+                  <ChevronRight size={15} className="mobile-more-arrow" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">
-        {NAV.map(([label, Icon, shortLabel]) => (
-          <button
-            type="button"
-            key={label}
-            className={`mobile-tab ${page === label ? 'active' : ''}`}
-            onClick={() => { setPage(label); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-          >
-            <span className="mobile-tab-icon"><Icon size={18} strokeWidth={page === label ? 2.2 : 1.8} /></span>
-            <span>{shortLabel}</span>
-          </button>
-        ))}
+        {MOBILE_PRIMARY_NAV.map(([label, Icon, shortLabel]) => {
+          const isActive = page === label && !mobileMoreOpen
+          return (
+            <button
+              type="button"
+              key={label}
+              className={`mobile-tab ${isActive ? 'active' : ''}`}
+              onClick={() => {
+                setPage(label)
+                setMobileMoreOpen(false)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+            >
+              <span className="mobile-tab-icon"><Icon size={19} strokeWidth={isActive ? 2.2 : 1.75} /></span>
+              <span>{shortLabel}</span>
+            </button>
+          )
+        })}
+        {(() => {
+          const isMorePage = MOBILE_MORE_NAV.some(([label]) => label === page)
+          const isActive = mobileMoreOpen || isMorePage
+          return (
+            <button
+              type="button"
+              className={`mobile-tab ${isActive ? 'active' : ''}`}
+              aria-expanded={mobileMoreOpen}
+              onClick={() => setMobileMoreOpen(v => !v)}
+            >
+              <span className="mobile-tab-icon"><MoreHorizontal size={19} strokeWidth={isActive ? 2.3 : 1.8} /></span>
+              <span>More</span>
+            </button>
+          )
+        })()}
       </nav>
 
       <CommandPalette
@@ -934,7 +1000,7 @@ function CandidatePreview({ person, theme, onPaperTurn, onOpenResumeMode, onOpen
     fetch(`/api/resumes/${person.id}`)
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (!cancelled) setDetail(d) })
-      .catch(() => {})
+      .catch(() => { })
     return () => { cancelled = true }
   }, [person?.id])
 
